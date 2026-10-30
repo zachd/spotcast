@@ -5,8 +5,10 @@ from unittest.mock import MagicMock, AsyncMock, patch
 
 from custom_components.spotcast.spotify.account import SpotifyAccount
 from custom_components.spotcast.websocket.recently_played_handler import (
+    async_complete_entry,
     async_recently_played,
     group_plays,
+    SpotifyException,
     HomeAssistant,
     ActiveConnection,
 )
@@ -112,6 +114,15 @@ class TestGroupPlays(IsolatedAsyncioTestCase):
     def test_limit_applied(self):
         self.assertEqual(len(group_plays(PLAYS, 2)), 2)
 
+    def test_relinked_album_left_for_lookup(self):
+        entry = group_plays(
+            [play("x", {"type": "album", "uri": "spotify:album:other"}, "t")],
+            20,
+        )[0]
+        self.assertIsNone(entry["name"])
+        self.assertIsNone(entry["icon"])
+        self.assertEqual(entry["artists"], [])
+
     def test_play_without_track_skipped(self):
         self.assertEqual(group_plays([{"track": None}], 20), [])
 
@@ -159,3 +170,57 @@ class TestBasicRequest(IsolatedAsyncioTestCase):
             [e["type"] for e in args[1]["items"]],
             ["playlist", "album", "artist"],
         )
+
+
+def entry(item_type: str, uri: str, name: str | None = None) -> dict:
+    """Builds an entry as group_plays returns it"""
+    return {
+        "type": item_type,
+        "uri": uri,
+        "name": name,
+        "artists": [],
+        "icon": None,
+        "played_at": "t",
+        "track_uri": "spotify:track:x",
+    }
+
+
+class TestCompleteEntry(IsolatedAsyncioTestCase):
+
+    async def asyncSetUp(self):
+        self.account = MagicMock(spec=SpotifyAccount)
+        self.account.async_get_album = AsyncMock(return_value=ALBUM)
+        self.account.async_get_artist = AsyncMock(
+            return_value={"name": "Baz"},
+        )
+
+    async def test_album_looked_up(self):
+        album = entry("album", "spotify:album:foo")
+        await async_complete_entry(self.account, album)
+        self.assertEqual(album["name"], "Foo Album")
+        self.assertEqual(album["artists"], ["Foo"])
+        self.assertEqual(album["icon"], "https://i.scdn.co/foo")
+
+    async def test_artist_looked_up(self):
+        artist = entry("artist", "spotify:artist:baz")
+        await async_complete_entry(self.account, artist)
+        self.assertEqual(artist["name"], "Baz")
+
+    async def test_named_entry_left_alone(self):
+        album = entry("album", "spotify:album:foo", "Known")
+        await async_complete_entry(self.account, album)
+        self.assertEqual(album["name"], "Known")
+        self.account.async_get_album.assert_not_called()
+
+    async def test_unknown_type_left_alone(self):
+        show = entry("show", "spotify:show:foo")
+        await async_complete_entry(self.account, show)
+        self.assertIsNone(show["name"])
+
+    async def test_failed_lookup_leaves_entry(self):
+        self.account.async_get_album.side_effect = SpotifyException(
+            404, -1, "not found",
+        )
+        album = entry("album", "spotify:album:gone")
+        await async_complete_entry(self.account, album)
+        self.assertIsNone(album["name"])

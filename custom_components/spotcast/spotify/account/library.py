@@ -121,6 +121,25 @@ class LibraryMixin:
 
         return result
 
+    async def async_get_artist(self, uri: str) -> dict:
+        """Retrieves an artist information.
+
+        Args:
+            uri(str): the URI of the artist to search
+
+        Returns:
+            dict: the artist details
+        """
+        await self.async_ensure_tokens_valid()
+        LOGGER.debug("Fetching information for artist `%s`", uri)
+
+        result = await self.hass.async_add_executor_job(
+            self.apis["public"].artist,
+            uri,
+        )
+
+        return result
+
     async def async_get_playlist_tracks(self, uri: str) -> list[dict]:
         """Retrieves the list of tracks inside a playlist."""
         await self.async_ensure_tokens_valid()

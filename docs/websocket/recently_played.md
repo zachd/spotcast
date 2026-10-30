@@ -109,7 +109,7 @@ The result of the transaction.
 > >
 > > ##### `name` (str | null)
 > >
-> > The name to show. Playlist names come from Spotify's internal endpoint, which also names Spotify's own playlists; it is `null` when that lookup fails or the name is otherwise unknown.
+> > The name to show. Playlist names come from Spotify's internal endpoint, which also names Spotify's own playlists. An album or artist the played track does not name (a track relinked from another release, an artist's radio) is looked up. It is `null` when a lookup fails.
 > >
 > > ##### `artists` (list[str])
 > >

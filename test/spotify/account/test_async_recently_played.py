@@ -89,3 +89,38 @@ class TestNoItems(IsolatedAsyncioTestCase):
 
     def test_empty_list_returned(self):
         self.assertEqual(self.result, [])
+
+
+class TestArtistRetrieval(IsolatedAsyncioTestCase):
+
+    @patch(f"{TEST_MODULE}.Store", spec=Store, new_callable=MagicMock)
+    @patch.object(SpotifyAccount, "async_ensure_tokens_valid")
+    async def asyncSetUp(self, mock_valid: AsyncMock, mock_store: MagicMock):
+
+        self.hass = MagicMock(spec=HomeAssistant)
+        self.hass.async_add_executor_job = AsyncMock(
+            return_value={"name": "Foo"},
+        )
+
+        self.account = SpotifyAccount(
+            entry_id="12345",
+            hass=self.hass,
+            private_session=MagicMock(spec=DesktopSession),
+            public_session=MagicMock(spec=PublicSession),
+        )
+
+        self.result = await self.account.async_get_artist(
+            "spotify:artist:foo",
+        )
+
+    def test_artist_returned(self):
+        self.assertEqual(self.result, {"name": "Foo"})
+
+    def test_executor_job_properly_called(self):
+        try:
+            self.hass.async_add_executor_job.assert_called_with(
+                self.account.apis["public"].artist,
+                "spotify:artist:foo",
+            )
+        except AssertionError:
+            self.fail()

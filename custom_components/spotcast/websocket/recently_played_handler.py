@@ -2,8 +2,10 @@
 and tracks of an account."""
 
 from asyncio import gather
+from logging import getLogger
 
 import voluptuous as vol
+from spotipy import SpotifyException
 from homeassistant.helpers import config_validation as cv
 from homeassistant.core import HomeAssistant
 from homeassistant.components.websocket_api import ActiveConnection
@@ -28,6 +30,8 @@ SCHEMA = vol.Schema(
 )
 
 LIKED_SONGS = "Liked Songs"
+
+LOGGER = getLogger(__name__)
 
 
 def group_plays(plays: list[dict], limit: int) -> list[dict]:
@@ -62,9 +66,13 @@ def group_plays(plays: list[dict], limit: int) -> list[dict]:
 
         if item_type == "track":
             name = track.get("name")
-        elif item_type == "album" and album.get("uri") == uri:
+        elif item_type == "album":
+            # A relinked track can belong to another release than the
+            # album it was played from: then the album is looked up.
+            if album.get("uri") != uri:
+                album = {}
             name = album.get("name")
-            artists = album.get("artists") or artists
+            artists = album.get("artists") or []
         elif item_type == "artist":
             name = next(
                 (a.get("name") for a in artists if a.get("uri") == uri),
@@ -97,6 +105,38 @@ def group_plays(plays: list[dict], limit: int) -> list[dict]:
     return entries
 
 
+async def async_complete_entry(account, entry: dict):
+    """Fills in what a play does not carry: playlist names, and the
+    name, artists and cover of an album or artist that differs from the
+    track's own. A failed lookup leaves the entry as it is.
+
+    Args:
+        - account(SpotifyAccount): the account to query with
+        - entry(dict): an entry built by `group_plays`, updated in place
+    """
+    if entry["name"] is not None and entry["type"] != "playlist":
+        return
+
+    try:
+        if entry["type"] == "playlist":
+            entry["name"] = await async_get_playlist_name(
+                account,
+                entry["uri"],
+            )
+        elif entry["type"] == "album":
+            album = await account.async_get_album(entry["uri"])
+            entry["name"] = album.get("name")
+            entry["artists"] = [
+                a.get("name") for a in album.get("artists") or []
+            ]
+            entry["icon"] = select_image_url(album.get("images") or [])
+        elif entry["type"] == "artist":
+            artist = await account.async_get_artist(entry["uri"])
+            entry["name"] = artist.get("name")
+    except SpotifyException as exc:
+        LOGGER.debug("Could not complete `%s`: %s", entry["uri"], exc)
+
+
 @websocket_wrapper
 async def async_recently_played(
     hass: HomeAssistant, connection: ActiveConnection, msg: dict
@@ -117,13 +157,7 @@ async def async_recently_played(
     plays = await account.async_recently_played()
     entries = group_plays(plays, limit)
 
-    playlists = [e for e in entries if e["type"] == "playlist"]
-    names = await gather(
-        *(async_get_playlist_name(account, e["uri"]) for e in playlists)
-    )
-
-    for entry, name in zip(playlists, names):
-        entry["name"] = name
+    await gather(*(async_complete_entry(account, e) for e in entries))
 
     connection.send_result(
         msg["id"],
