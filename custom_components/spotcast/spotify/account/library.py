@@ -263,6 +263,34 @@ class LibraryMixin:
 
         return result
 
+    async def async_recently_played(self, limit: int = 50) -> list[dict]:
+        """Returns the account's most recently played tracks, newest
+        first, each with the context it was played from.
+
+        Args:
+            limit(int, optional): The maximum number of plays to
+                retrieve. Spotify returns at most 50. Defaults to 50.
+
+        Returns:
+            list[dict]: the play history items, each with a `track`,
+                a `played_at` timestamp and a `context` (None when the
+                track was not played from an album, artist or playlist)
+        """
+        await self.async_ensure_tokens_valid()
+        LOGGER.debug(
+            "Getting recently played tracks for account `%s`",
+            self.name,
+        )
+
+        result = await self.hass.async_add_executor_job(
+            self.apis["public"].current_user_recently_played,
+            limit,
+        )
+
+        return [
+            item for item in (result.get("items") or []) if item is not None
+        ]
+
     async def async_categories(
         self,
         force: bool = False,

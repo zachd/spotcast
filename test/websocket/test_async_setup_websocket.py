@@ -27,4 +27,4 @@ class TestHandlerRegistration(IsolatedAsyncioTestCase):
         await async_setup_websocket(self.mocks["hass"])
 
     def test_all_handlers_registered(self):
-        self.assertEqual(self.mocks["register"].call_count, 9)
+        self.assertEqual(self.mocks["register"].call_count, 10)

@@ -163,6 +163,7 @@ Spotcast provides multiple WebSocket API endpoints, used for example by companio
 | [`spotcast/liked_media`](./docs/websocket/liked_media.md)   | Provides the list of liked tracks for an account.                                                                                               |
 | [`spotcast/player`](./docs/websocket/player.md)             | Provides the playback state of an account.                                                                                                      |
 | [`spotcast/playlists`](./docs/websocket/playlists.md)       | Provides the list of the user's playlists.                                                                                                      |
+| [`spotcast/recently_played`](./docs/websocket/recently_played.md) | Provides the albums, artists, playlists and tracks an account played recently, one entry each, newest first.                              |
 | [`spotcast/search`](./docs/websocket/search.md)             | Searches Spotify for playlists, tracks, albums or artists.                                                                                      |
 | [`spotcast/tracks`](./docs/websocket/tracks.md)             | Provides the list of tracks in a playlist.                                                                                                      |
 
