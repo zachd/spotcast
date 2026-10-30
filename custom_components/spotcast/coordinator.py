@@ -115,6 +115,7 @@ class SpotcastCoordinator(DataUpdateCoordinator[dict]):
         await self._async_update_device_manager()
 
         context_name = await self.account.async_get_current_context_name()
+        self._record_recent(playback_state, context_name)
 
         return {
             "profile": profile,
@@ -160,6 +161,17 @@ class SpotcastCoordinator(DataUpdateCoordinator[dict]):
             "Could not refresh Spotify data for entry "
             f"`{self.account.entry_id}`: {exc}"
         )
+
+    def _record_recent(self, playback_state: dict, context_name: str):
+        """Adds what is playing to the account's recents log, once the
+        entry has one."""
+        recents = self.hass.data.get(DOMAIN, {}).get(
+            self.config_entry.entry_id,
+            {},
+        ).get("recents")
+
+        if recents is not None:
+            recents.record_playback(playback_state, context_name)
 
     async def _async_update_device_manager(self):
         """Runs the device manager update if one was registered."""

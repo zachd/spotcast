@@ -6,7 +6,7 @@ This repository is the continuation of the original [fondberg/spotcast](https://
 
 ### New features
 
-- New WebSocket endpoint [`spotcast/recently_played`](docs/websocket/recently_played.md): the albums, artists, playlists and tracks an account played recently, newest first, one entry each, as the Spotify app's Recents shows them. It groups Spotify's last 50 plays by the context they were played from and names Spotify's own playlists through the internal endpoint, so a dashboard card can offer "play it again" tiles without rebuilding them from Home Assistant's history.
+- New WebSocket endpoint [`spotcast/recently_played`](docs/websocket/recently_played.md): the albums, artists, playlists and tracks an account played recently, newest first, one entry each, as the Spotify app's Recents shows them. Spotcast keeps its own log of the contexts an account plays (recorded on every refresh, kept 30 days in Home Assistant storage) and merges in Spotify's last 50 plays, so a long session from one playlist no longer hides everything played before it. Spotify's own playlists are named through the internal endpoint, and albums or artists a play does not name are looked up.
 
 ## v6.6.5 (2026-10-27)
 

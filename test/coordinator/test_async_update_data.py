@@ -303,3 +303,33 @@ class TestRateLimited(IsolatedAsyncioTestCase):
             await self.coordinator._async_update_data()
 
         self.mocks["account"].async_devices.assert_not_called()
+
+
+class TestRecentRecorded(IsolatedAsyncioTestCase):
+
+    async def asyncSetUp(self):
+
+        account = MagicMock(spec=SpotifyAccount)
+        account.entry_id = "12345"
+        account.base_refresh_rate = 30
+        account.async_profile.return_value = {"id": "dummy_id"}
+        account.async_devices.return_value = []
+        account.async_playback_state.return_value = {"is_playing": True}
+        account.async_playlists_count.return_value = 10
+        account.async_liked_songs_count.return_value = 5
+        account.async_get_current_context_name.return_value = "My Playlist"
+
+        self.recents = MagicMock()
+        hass = MagicMock(spec=HomeAssistant)
+        hass.data = {"spotcast": {"12345": {"recents": self.recents}}}
+        entry = MagicMock(spec=ConfigEntry)
+        entry.entry_id = "12345"
+
+        coordinator = SpotcastCoordinator(hass, entry, account)
+        await coordinator._async_update_data()
+
+    def test_playback_recorded(self):
+        self.recents.record_playback.assert_called_once_with(
+            {"is_playing": True},
+            "My Playlist",
+        )

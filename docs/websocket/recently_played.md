@@ -1,6 +1,8 @@
 # Recently played
 
-Provides the albums, artists, playlists and tracks an account played recently, newest first, one entry each, the way the Spotify app's Recents shows them. It is built from Spotify's last 50 plays, grouped by the context they were played from.
+Provides the albums, artists, playlists and tracks an account played recently, newest first, one entry each, the way the Spotify app's Recents shows them.
+
+Spotify's play history only returns the last 50 tracks, so one long playlist session would hide everything before it. Spotcast therefore keeps its own log: on every refresh it records the playlist, album, artist or Liked Songs that is playing on the account (on any device), and keeps each one for 30 days after its last play, up to 100 entries, in Home Assistant's storage. Each request also merges in Spotify's last 50 plays, which covers what was played while Home Assistant was not running.
 
 ## Request
 
@@ -29,7 +31,7 @@ The endpoint of the WebSocket to reach. Must be `spotcast/recently_played`.
 
 *Optional*
 
-The maximum number of entries to return. Defaults to `20`. Spotify keeps only the last 50 plays, so a long session from one playlist can leave fewer entries than the limit.
+The maximum number of entries to return. Defaults to `20`.
 
 ### `account` (str)
 

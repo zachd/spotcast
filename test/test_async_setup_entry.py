@@ -23,6 +23,19 @@ FULL_SCOPE_DATA = {
 
 TEST_MODULE = "custom_components.spotcast"
 
+# The recents log reads Home Assistant storage; its own tests cover it.
+_RECENTS = patch(f"{TEST_MODULE}.RecentsLog")
+
+
+def setUpModule():
+    """Replaces the recents log for every test of this module"""
+    _RECENTS.start().return_value.async_load = AsyncMock()
+
+
+def tearDownModule():
+    """Restores the recents log"""
+    _RECENTS.stop()
+
 
 class TestEntryRegistration(IsolatedAsyncioTestCase):
 
@@ -98,6 +111,13 @@ class TestEntryRegistration(IsolatedAsyncioTestCase):
             self.mocks["hass"].data["spotcast"]["foo"]["coordinator"],
             self.mocks["coordinator"],
         )
+
+    def test_recents_log_loaded_and_stored(self):
+        recents = self.mocks["hass"].data["spotcast"]["foo"]["recents"]
+        try:
+            recents.async_load.assert_awaited()
+        except AssertionError:
+            self.fail()
 
     def test_update_listener_registered(self):
         try:

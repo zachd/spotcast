@@ -4,6 +4,7 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, AsyncMock, patch
 
 from custom_components.spotcast.spotify.account import SpotifyAccount
+from custom_components.spotcast.spotify.recents import RecentsLog
 from custom_components.spotcast.websocket.recently_played_handler import (
     async_complete_entry,
     async_recently_played,
@@ -144,6 +145,8 @@ class TestBasicRequest(IsolatedAsyncioTestCase):
         }
 
         self.mocks["account"].id = "12345"
+        self.mocks["account"].entry_id = "entry"
+        self.mocks["hass"].data = {}
         self.mocks["account"].async_recently_played = AsyncMock(
             return_value=PLAYS,
         )
@@ -224,3 +227,47 @@ class TestCompleteEntry(IsolatedAsyncioTestCase):
         album = entry("album", "spotify:album:gone")
         await async_complete_entry(self.account, album)
         self.assertIsNone(album["name"])
+
+
+class TestRequestWithLog(IsolatedAsyncioTestCase):
+
+    @patch(f"{TEST_MODULE}.async_get_playlist_name", new_callable=AsyncMock)
+    @patch(f"{TEST_MODULE}.async_get_account")
+    async def asyncSetUp(self, mock_account: AsyncMock, mock_name: AsyncMock):
+
+        mock_account.return_value = MagicMock(spec=SpotifyAccount)
+        mock_name.return_value = "Daily Mix"
+
+        self.account = mock_account.return_value
+        self.account.id = "12345"
+        self.account.entry_id = "entry"
+        self.account.async_recently_played = AsyncMock(return_value=PLAYS)
+
+        self.recents = MagicMock(spec=RecentsLog)
+        self.recents.entries.return_value = [
+            entry("playlist", "spotify:playlist:older"),
+        ]
+
+        self.hass = MagicMock(spec=HomeAssistant)
+        self.hass.data = {"spotcast": {"entry": {"recents": self.recents}}}
+        self.connection = MagicMock(spec=ActiveConnection)
+
+        await async_recently_played(
+            self.hass,
+            self.connection,
+            {"id": 1, "limit": 5},
+        )
+
+    def test_fresh_plays_merged_into_log(self):
+        first = self.recents.merge.call_args_list[0].args[0]
+        self.assertEqual(len(first), 6)
+
+    def test_log_entries_returned(self):
+        self.recents.entries.assert_called_once_with(5)
+        items = self.connection.send_result.call_args.args[1]["items"]
+        self.assertEqual(items[0]["uri"], "spotify:playlist:older")
+        self.assertEqual(items[0]["name"], "Daily Mix")
+
+    def test_resolved_names_kept(self):
+        last = self.recents.merge.call_args_list[-1].args[0]
+        self.assertEqual(last[0]["name"], "Daily Mix")
