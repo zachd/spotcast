@@ -17,6 +17,7 @@ from custom_components.spotcast.websocket import (
     tracks_handler,
     liked_media_handler,
     recently_played_handler,
+    play_history_handler,
 )
 
 WEBSOCKET_ENDPOINTS = MappingProxyType(
@@ -60,6 +61,10 @@ WEBSOCKET_ENDPOINTS = MappingProxyType(
         recently_played_handler.ENDPOINT: {
             "handler": recently_played_handler.async_recently_played,
             "schema": recently_played_handler.SCHEMA,
+        },
+        play_history_handler.ENDPOINT: {
+            "handler": play_history_handler.async_play_history,
+            "schema": play_history_handler.SCHEMA,
         },
     }
 )

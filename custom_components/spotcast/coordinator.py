@@ -163,15 +163,16 @@ class SpotcastCoordinator(DataUpdateCoordinator[dict]):
         )
 
     def _record_recent(self, playback_state: dict, context_name: str):
-        """Adds what is playing to the account's recents log, once the
-        entry has one."""
-        recents = self.hass.data.get(DOMAIN, {}).get(
+        """Adds what is playing to the account's recents and play logs,
+        once the entry has them."""
+        data = self.hass.data.get(DOMAIN, {}).get(
             self.config_entry.entry_id,
             {},
-        ).get("recents")
+        )
 
-        if recents is not None:
-            recents.record_playback(playback_state, context_name)
+        for log in (data.get("recents"), data.get("plays")):
+            if log is not None:
+                log.record_playback(playback_state, context_name)
 
     async def _async_update_device_manager(self):
         """Runs the device manager update if one was registered."""

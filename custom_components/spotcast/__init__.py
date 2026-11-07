@@ -26,6 +26,7 @@ from .sessions.exceptions import TokenRefreshError, InternalServerError
 from .utils import ensure_default_data
 from .websocket import async_setup_websocket
 from .spotify.recents import RecentsLog
+from .spotify.play_log import PlayLog
 from .config_flow import DEFAULT_OPTIONS
 from .spotify import SpotifyAccount
 from .coordinator import SpotcastCoordinator
@@ -106,6 +107,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     recents = RecentsLog(hass, entry.entry_id)
     await recents.async_load()
     hass.data[DOMAIN][entry.entry_id]["recents"] = recents
+    plays = PlayLog(hass, entry.entry_id)
+    await plays.async_load()
+    hass.data[DOMAIN][entry.entry_id]["plays"] = plays
     hass.data[DOMAIN][entry.entry_id]["coordinator"] = coordinator
 
     entry.async_on_unload(entry.add_update_listener(async_update_options))
