@@ -384,3 +384,60 @@ class PlaybackMixin:
             raise PlaybackError(
                 f"Could not add `{uri}` to device `{device_id}`"
             ) from exc
+
+    async def async_queue(self) -> dict:
+        """Returns the playback queue of the account's active device.
+
+        Returns:
+            - dict: the `currently_playing` item and the `queue` that
+                follows it, as Spotify returns them. Empty when nothing
+                is playing (Spotify answers 204, or 404 when no device
+                is active).
+        """
+        await self.async_ensure_tokens_valid()
+        LOGGER.debug("Getting the queue for account `%s`", self.name)
+
+        try:
+            data = await self.hass.async_add_executor_job(
+                self.apis["public"].queue,
+            )
+        except RateLimitedError:
+            raise
+        except SpotifyException as exc:
+            if exc.http_status != 404:
+                raise
+
+            LOGGER.debug("No active device for account `%s`", self.name)
+            data = None
+
+        return data or {}
+
+    async def async_next_track(self, device_id: str = None):
+        """Skips to the next item in the playback queue.
+
+        Args:
+            - device_id(str, optional): The id of the device this
+                command is targeting. If None, the account's currently
+                active device is the target. Defaults to None.
+
+        Raises:
+            - PlaybackError: raised when Spotify refuses the skip
+            - RateLimitedError: raised untouched so it surfaces with
+                its resume time
+        """
+        await self.async_ensure_tokens_valid()
+
+        LOGGER.info("Skipping to the next track on device `%s`", device_id)
+
+        try:
+            await self.hass.async_add_executor_job(
+                self.apis["public"].next_track,
+                device_id,
+            )
+        except RateLimitedError:
+            raise
+        except SpotifyException as exc:
+            raise PlaybackError(
+                f"Could not skip to the next track on device `{device_id}`"
+                f": {exc.msg}"
+            ) from exc

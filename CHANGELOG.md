@@ -7,6 +7,8 @@ This repository is the continuation of the original [fondberg/spotcast](https://
 ### New features
 
 - New WebSocket endpoint [`spotcast/recently_played`](docs/websocket/recently_played.md): the albums, artists, playlists and tracks an account played recently, newest first, one entry each, as the Spotify app's Recents shows them. Spotcast keeps its own log of the contexts an account plays (recorded on every refresh, kept 30 days in Home Assistant storage) and merges in Spotify's last 50 plays, so a long session from one playlist no longer hides everything played before it. Spotify's own playlists are named through the internal endpoint, and albums or artists a play does not name are looked up.
+- New WebSocket endpoint [`spotcast/queue`](docs/websocket/queue.md): the track or podcast episode playing on an account and up to 20 items queued after it, as the Spotify app's "Up next" shows them, each with its name, artists (or show publisher), album (or show), a cover sized for a list row and its length. Nothing playing returns an empty queue instead of an error.
+- New WebSocket endpoint [`spotcast/skip`](docs/websocket/skip.md): skips forward 1 to 20 items in one request, so a queued item can be played directly. The skips are sent one after the other, and the result says how many went through.
 
 ## v6.6.5 (2026-10-27)
 

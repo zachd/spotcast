@@ -40,6 +40,38 @@ def select_image_url(images: list[dict]) -> str:
     return image_url
 
 
+def select_thumbnail_url(images: list[dict], min_width: int = 64) -> str:
+    """Returns the smallest image at least `min_width` pixels wide,
+    for a list row. Falls back to the largest image when none is wide
+    enough, and to the first image when none carries its size.
+
+    Args:
+        - images(list[dict]): the list of images as returned by a
+            Spotify API endpoint, each with a `url` and usually a
+            `width`.
+        - min_width(int, optional): the narrowest acceptable image,
+            in pixels. Defaults to 64.
+
+    Returns:
+        - str: The URL of the selected image, or None when there is
+            no image.
+    """
+    images = [image for image in images or [] if image.get("url")]
+    sized = [image for image in images if image.get("width") is not None]
+    wide_enough = [image for image in sized if image["width"] >= min_width]
+
+    if wide_enough:
+        return min(wide_enough, key=lambda image: image["width"])["url"]
+
+    if sized:
+        return max(sized, key=lambda image: image["width"])["url"]
+
+    if images:
+        return images[0]["url"]
+
+    return None
+
+
 def url_to_uri(url: str) -> str:
     """converts a url to a spotify uri"""
 
