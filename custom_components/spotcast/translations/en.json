@@ -295,6 +295,16 @@
                     "description": "Additional modifiers when starting media playback"
                 }
             }
+        },
+        "refresh_playback_state": {
+            "name": "Refresh Playback State",
+            "description": "Read the current playback from Spotify now, so a later Transfer Playback resumes exactly where it was",
+            "fields": {
+                "account": {
+                    "name": "Spotify Account",
+                    "description": "The ID of the Spotify account to use. Takes the default account otherwise."
+                }
+            }
         }
     }
 }

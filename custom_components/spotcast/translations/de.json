@@ -295,6 +295,16 @@
                     "description": "Zusatzoptionen für die Wiedergabe."
                 }
             }
+        },
+        "refresh_playback_state": {
+            "name": "Refresh Playback State",
+            "description": "Read the current playback from Spotify now, so a later Transfer Playback resumes exactly where it was",
+            "fields": {
+                "account": {
+                    "name": "Spotify Nutzerkonto",
+                    "description": "Die ID des Spotify Kontos das verwendet werden soll. Nutzt das Standardkonto, wenn nicht angegeben."
+                }
+            }
         }
     }
 }

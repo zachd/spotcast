@@ -295,6 +295,16 @@
                     "description": "Modificateurs additionels lors du démarrage de la lecture."
                 }
             }
+        },
+        "refresh_playback_state": {
+            "name": "Refresh Playback State",
+            "description": "Read the current playback from Spotify now, so a later Transfer Playback resumes exactly where it was",
+            "fields": {
+                "account": {
+                    "name": "Compte Spotify",
+                    "description": "L'ID du compte Spotify à utiliser. Utilise le compte par défaut sinon."
+                }
+            }
         }
     }
 }

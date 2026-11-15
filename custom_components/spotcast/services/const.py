@@ -43,6 +43,11 @@ from custom_components.spotcast.services.unlike_media import (
     async_unlike_media,
 )
 
+from custom_components.spotcast.services.refresh_playback_state import (
+    REFRESH_PLAYBACK_STATE_SCHEMA,
+    async_refresh_playback_state,
+)
+
 SERVICE_SCHEMAS = MappingProxyType({
     "play_media": PLAY_MEDIA_SCHEMA,
     "play_dj": PLAY_DJ_SCHEMA,
@@ -54,6 +59,7 @@ SERVICE_SCHEMAS = MappingProxyType({
     "play_saved_episodes": PLAY_SAVED_EPISODES,
     "like_media": LIKE_MEDIA_SCHEMA,
     "unlike_media": UNLIKE_MEDIA_SCHEMA,
+    "refresh_playback_state": REFRESH_PLAYBACK_STATE_SCHEMA,
 })
 
 SERVICE_HANDLERS = MappingProxyType({
@@ -67,4 +73,5 @@ SERVICE_HANDLERS = MappingProxyType({
     "play_saved_episodes": async_play_saved_episodes,
     "like_media": async_like_media,
     "unlike_media": async_unlike_media,
+    "refresh_playback_state": async_refresh_playback_state,
 })

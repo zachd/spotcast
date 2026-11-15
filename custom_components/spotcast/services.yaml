@@ -308,3 +308,15 @@ unlike_media:
       selector:
         config_entry:
           integration: spotcast
+
+refresh_playback_state:
+  name: Refresh Playback State
+  description: Read the current playback from Spotify now, so a later transfer_playback resumes exactly where it was
+  fields:
+    account:
+      name: Spotify Account
+      description: The id of the spotify account to use. Takes the default account otherwise
+      required: false
+      selector:
+        config_entry:
+          integration: spotcast
